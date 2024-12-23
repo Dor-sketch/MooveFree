@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,32 +13,38 @@
             font-family: Arial, sans-serif;
             background: #f5f5f5;
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
+
         #map {
             height: 500px;
             margin: 20px 0;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .search-container {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
+
         .search-box {
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
         }
+
         .search-input {
             position: relative;
             flex: 1;
         }
+
         input {
             width: 100%;
             padding: 12px;
@@ -45,6 +52,7 @@
             border-radius: 4px;
             font-size: 16px;
         }
+
         .suggestions {
             position: absolute;
             top: 100%;
@@ -59,13 +67,16 @@
             z-index: 1000;
             display: none;
         }
+
         .suggestion {
             padding: 8px 12px;
             cursor: pointer;
         }
+
         .suggestion:hover {
             background: #f0f0f0;
         }
+
         button {
             padding: 12px 24px;
             background: #0078A8;
@@ -76,43 +87,52 @@
             font-size: 16px;
             transition: background 0.2s;
         }
+
         button:hover {
             background: #005c82;
         }
+
         #results {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .route {
             margin-bottom: 15px;
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
         .route-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
+
         .route-number {
             font-size: 24px;
             font-weight: bold;
             color: #0078A8;
         }
+
         .route-details {
             margin-top: 10px;
         }
+
         .route-stops {
             margin-top: 10px;
             padding-right: 20px;
         }
+
         .route-stop {
             position: relative;
             padding: 8px 0;
         }
+
         .route-stop::before {
             content: '';
             position: absolute;
@@ -122,6 +142,7 @@
             width: 2px;
             background: #ddd;
         }
+
         .route-stop::after {
             content: '';
             position: absolute;
@@ -133,11 +154,13 @@
             border-radius: 50%;
             transform: translateY(-50%);
         }
+
         .loading {
             display: none;
             text-align: center;
             padding: 20px;
         }
+
         .loading::after {
             content: '';
             display: inline-block;
@@ -148,12 +171,19 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>מתכנן נסיעות בתחבורה ציבורית</h1>
@@ -202,17 +232,17 @@
             showLoading(true);
             try {
                 // Load stops
-                const stopsResponse = await fetch('israel-public-transportation/stops.txt');
+                const stopsResponse = await fetch('stops.txt');
                 const stopsText = await stopsResponse.text();
                 stops = parseCSV(stopsText);
 
                 // Load routes
-                const routesResponse = await fetch('israel-public-transportation/routes.txt');
+                const routesResponse = await fetch('routes.txt');
                 const routesText = await routesResponse.text();
                 routes = parseCSV(routesText);
 
                 // Load shapes
-                const shapesResponse = await fetch('israel-public-transportation/shapes.txt');
+                const shapesResponse = await fetch('shapes.txt');
                 const shapesText = await shapesResponse.text();
                 shapes = parseCSV(shapesText);
 
@@ -320,6 +350,8 @@
                     }
                 }
             });
+
+            console.log("Stop Graph:", Array.from(stopGraph.entries()));
         }
 
         // Get stops for a route using shape data
@@ -336,13 +368,13 @@
             }).map(stop => stop.stop_id);
         }
 
-        // Check if a point is near a line
-        function isPointNearLine(point, line, threshold = 0.001) {
+        // Check if a point is near a line 0.1 is 1km
+        function isPointNearLine(point, line, threshold = 0.1) {
             for (let i = 0; i < line.length - 1; i++) {
                 const d = pointToLineDistance(
                     point[0], point[1],
                     line[i][0], line[i][1],
-                    line[i+1][0], line[i+1][1]
+                    line[i + 1][0], line[i + 1][1]
                 );
                 if (d < threshold) return true;
             }
@@ -453,23 +485,22 @@
 
         // Clear all markers from the map
         function clearMarkers() {
-            markers.forEach(marker => map.removeMarker(marker));
-            markers = [];
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = []; // Clear the marker array
         }
+
 
         // Clear all route lines from the map
         function clearRouteLines() {
             routeLines.forEach(line => map.removeLayer(line));
             routeLines = [];
         }
-
-        // Find routes between stops using BFS
         async function findRoutes() {
             showLoading(true);
             clearRouteLines();
 
-            const fromInput = document.getElementById('from').value;
-            const toInput = document.getElementById('to').value;
+            const fromInput = document.getElementById('from').value.trim();
+            const toInput = document.getElementById('to').value.trim();
 
             const fromStop = findStopByName(fromInput);
             const toStop = findStopByName(toInput);
@@ -480,14 +511,28 @@
                 return;
             }
 
-            const routes = findPossibleRoutes(fromStop.stop_id, toStop.stop_id);
+            // Define startId and endId
+            const startId = fromStop.stop_id;
+            const endId = toStop.stop_id;
+
+            // Find possible routes
+            const routes = findPossibleRoutes(startId, endId);
+
+            // Display results
             displayRouteResults(routes, fromStop, toStop);
             showLoading(false);
         }
 
+
         // Find a stop by its name
         function findStopByName(name) {
-            return stops.find(stop => stop.stop_name === name);
+            let result = stops.find(stop => stop.stop_name === name);
+            if (!result) {
+                const regex = new RegExp(name, 'i');
+                result = stops.find(stop => regex.test(stop.stop_name));
+            }
+            console.log(result);
+            return result;
         }
 
         // Find possible routes between two stops using BFS
@@ -496,7 +541,7 @@
             const queue = [[startId, []]];
             const routes = [];
 
-            while (queue.length > 0 && routes.length < 5) {
+            while (queue.length > 0 && routes.length < 500) {
                 const [currentId, path] = queue.shift();
 
                 if (currentId === endId) {
@@ -507,10 +552,15 @@
                 if (visited.has(currentId)) continue;
                 visited.add(currentId);
 
+                console.log(currentId);
+                console.log(visited);
+
                 const neighbors = stopGraph.get(currentId) || new Set();
+                if (neighbors.size === 0) console.log('No neighbors found for', currentId);
                 for (const nextId of neighbors) {
                     if (!visited.has(nextId)) {
                         const routeId = findRouteIdBetweenStops(currentId, nextId);
+                        console.log(routeId);
                         if (routeId) {
                             queue.push([nextId, [...path, routeId]]);
                         }
@@ -532,6 +582,7 @@
                     return route.route_id;
                 }
             }
+            console.log('No route found between', stopId1, stopId2);
             return null;
         }
 
@@ -604,4 +655,5 @@
         };
     </script>
 </body>
+
 </html>
