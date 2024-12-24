@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MooveFree - מערכת התחבורה הציבורית בישראל</title>
+    <meta name="description" content="מערכת המידע של התחבורה הציבורית בישראל. צפייה במפת הקווים, מסלולים ותחנות ברחבי הארץ.">
+    <meta name="keywords" content="תחבורה ציבורית, אוטובוסים, תחנות, קווים, ישראל, מפה">
+    <meta name="author" content="Dor Pascal">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#3B82F6">
+    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="./assets/favicon.ico">
+    <meta property="og:title" content="MooveFree - מערכת התחבורה הציבורית בישראל">
+    <meta property="og:description" content="מערכת המידע של התחבורה הציבורית בישראל. צפייה במפת הקווים, מסלולים ותחנות ברחבי הארץ.">
+    <meta property="og:image" content="./assets/og-image.png">
+    <meta property="og:url" content="https://dorpascal.com/MooveFree/">
+    <meta property="og:site_name" content="MooveFree">
+    <meta property="og:locale" content="he_IL">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:locale:alternate" content="en_GB">
+    <meta property="og:locale:alternate" content="en_CA">
+    <meta property="og:locale:alternate" content="en_AU">
+    <meta property="og:locale:alternate" content="en_NZ">
+    <meta property="og:locale:alternate" content="en_IE">
+    <meta property="og:locale:alternate" content="en_ZA">
+    <meta property="og:locale:alternate" content="ar_SA">
+    <meta property="og:locale:alternate" content="ar_AE">
+    <meta property="og:locale:alternate" content="ar_BH">
+    <meta property="og:type" content="website">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #2563EB;
+            --secondary-color: #764BA2;
+            --gradient-start: #667EEA;
+            --gradient-end: #764BA2;
+            --text-primary: #1F2937;
+            --text-secondary: #4B5563;
+            --background-light: #F3F4F6;
+            --surface: #FFFFFF;
+            --border: #E5E7EB;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background-light);
+            direction: rtl;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--surface);
+            padding: 1.5rem;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .route-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .route-info {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .route-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+        .route-number {
+            background: var(--primary-color);
+            color: white;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .route-details {
+            flex-grow: 1;
+        }
+
+        .route-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .route-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .about-section {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .about-section h2 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .about-section p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                max-height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>מערכת התחבורה הציבורית בישראל</h1>
+                <p>מידע על קווי אוטובוס ותחנות</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRoutes">0</div>
+                    <div>קווים</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalStops">0</div>
+                    <div>תחנות</div>
+                </div>
+            </div>
+
+            <div class="about-section">
+                <h2>אודות המערכת</h2>
+                <p>
+                    ברוכים הבאים למערכת המידע של התחבורה הציבורית בישראל.
+                    המערכת מאפשרת צפייה במפת הקווים, מסלולים ותחנות ברחבי הארץ.
+                </p>
+                <p>
+                    ניתן לבחור קו מהרשימה כדי לראות את המסלול המפורט שלו על המפה,
+                    כולל כל התחנות לאורך המסלול.
+                </p>
+            </div>
+
+            <div class="route-list" id="routeList">
+                <!-- Routes will be populated here -->
+            </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script type="module">
+        let routeLayers = new Map();
+
+        const map = L.map('map').setView([31.956392, 34.898098], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Generate a color based on route number for consistency
+        function getRouteColor(routeNum) {
+            const hue = parseInt(routeNum) * 137.508; // Golden angle in degrees
+            return `hsl(${hue % 360}, 70%, 50%)`;
+        }
+
+        async function loadData() {
+            const data = { routes: [], stops: [], trips: [] };
+
+            try {
+                const [routesResponse, stopsResponse, tripsResponse] = await Promise.all([
+                    fetch('./assets/routes.txt'),
+                    fetch('./assets/stops.txt'),
+                    fetch('./assets/trips.txt')
+                ]);
+
+                data.routes = d3.csvParse(await routesResponse.text());
+                data.stops = d3.csvParse(await stopsResponse.text());
+                data.trips = d3.csvParse(await tripsResponse.text());
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+
+            return data;
+        }
+
+        function initializeVisualization(data) {
+            const { routes, stops, trips } = data;
+
+            document.getElementById('totalRoutes').textContent = routes.length;
+            document.getElementById('totalStops').textContent = stops.length;
+
+            // Add stops to map with improved styling
+            stops.forEach(stop => {
+                const marker = L.circleMarker([stop.stop_lat, stop.stop_lon], {
+                    radius: 5,
+                    fillColor: "#333",
+                    color: "#fff",
+                    weight: 1.5,
+                    opacity: 0.9,
+                    fillOpacity: 0.7
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="text-align: right; direction: rtl;">
+                        <strong>${stop.stop_name}</strong><br>
+                        ${stop.stop_desc || ''}<br>
+                        מזהה תחנה: ${stop.stop_id}
+                    </div>
+                `);
+            });
+
+            // Create route list with improved styling
+            const routeList = document.getElementById('routeList');
+            const uniqueRoutes = [...new Set(routes.map(r => r.route_short_name))].sort((a, b) =>
+                parseInt(a) - parseInt(b)
+            );
+
+            uniqueRoutes.forEach(routeNum => {
+                const routeInfo = routes.find(r => r.route_short_name === routeNum);
+                const div = document.createElement('div');
+                div.className = 'route-info';
+
+                const routeColor = getRouteColor(routeNum);
+                div.innerHTML = `
+                    <div class="route-number" style="background: ${routeColor}">
+                        ${routeNum}
+                    </div>
+                    <div class="route-details">
+                        <div class="route-name">קו ${routeNum}</div>
+                        <div class="route-description">${routeInfo.route_long_name.split('<->')[0]}</div>
+                    </div>
+                `;
+
+                div.onclick = () => {
+                    window.location.href = `./route_pages/route_${routeNum}.html`;
+                };
+
+                routeList.appendChild(div);
+            });
+        }
+
+        const data = await loadData();
+        initializeVisualization(data);
+    </script>
+</body>
+</html>

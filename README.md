@@ -33,11 +33,15 @@ Note that the application is still under development and some features may not b
 
 ### Route Planning
 
-![Route Planning](images/Screenshot2.png)
+![Route Planning](images/Screenshot5.png)
 
 ### Stop Visualization
 
 ![Stop Visualization](images/Screenshot3.png)
+
+### Route Visualization
+
+![Route Visualization](images/480.png)
 
 ## ⚠️ Project Status
 
@@ -95,7 +99,7 @@ Currently in development with some features under construction:
     python -m http.server 8000
     ```
 
-Visit `http://localhost:8000` in your web browser.
+    Visit `http://localhost:8000` in your web browser.
 
 ## 🗺️ Usage
 

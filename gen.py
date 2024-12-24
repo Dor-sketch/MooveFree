@@ -29,7 +29,7 @@ def generate_stylish_route_pages(gtfs_path):
     """Generate stylish HTML pages with maps for each route in the GTFS data."""
     try:
         # Create output directory
-        output_dir = "route_pages"
+        output_dir = "docs/route_pages"
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
         os.makedirs(output_dir)
@@ -48,79 +48,191 @@ def generate_stylish_route_pages(gtfs_path):
 
         # HTML template for route pages
         route_template = Template("""
-        <!DOCTYPE html>
-<html lang="en">
+      <!DOCTYPE html>
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Route {{ route_short_name }} - {{ route_long_name }}</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <!-- Primary Meta Tags -->
+    <title>קו {{ route_short_name }} - {{ route_long_name }} | MooveFree</title>
+    <meta name="title" content="קו {{ route_short_name }} - {{ route_long_name }} | MooveFree">
+    <meta name="description" content="מידע על קו {{ route_short_name }}: {{ route_long_name }}. צפו במפת המסלול, תחנות, וזמני נסיעה.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ current_url }}">
+    <meta property="og:title" content="קו {{ route_short_name }} - {{ route_long_name }}">
+    <meta property="og:description" content="מידע על קו {{ route_short_name }}: {{ route_long_name }}. צפו במפת המסלול, תחנות, וזמני נסיעה.">
+    <meta property="og:image" content="https://dorpascal.com/MooveFree/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="MooveFree Logo">
+    <meta property="og:site_name" content="MooveFree">
+    <meta property="og:locale" content="he_IL">
+    <meta name="theme-color" content="#2d3748">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#2d3748">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MooveFree">
+    <meta name="application-name" content="MooveFree">
+    <meta name="msapplication-TileColor" content="#2d3748">
+    <meta name="apple-itunes-app" content="app-id=6736739283">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ current_url }}">
+    <meta property="twitter:title" content="קו {{ route_short_name }} - {{ route_long_name }}">
+    <meta property="twitter:description" content="מידע על קו {{ route_short_name }}: {{ route_long_name }}. צפו במפת המסלול, תחנות, וזמני נסיעה.">
+    <meta property="twitter:image" content="https://dorpascal.com/MooveFree/assets/og-image.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="../assets/favicon.png">
+
+    <!-- Stylesheets -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <link href="../assets/styles.css" rel="stylesheet">
+
+    <!-- Schema.org markup for Google -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BusTrip",
+        "name": "קו {{ route_short_name }}",
+        "description": "{{ route_long_name }}",
+        "provider": {
+            "@type": "Organization",
+            "name": "תחבורה ציבורית בישראל"
+        },
+        "itinerary": {
+            "@type": "ItemList",
+            "itemListElement": [
+                {% for stop in stops %}
+                {
+                    "@type": "BusStop",
+                    "name": "{{ stop.name }}",
+                    "geo": {
+                        "@type": "GeoCoordinates",
+                        "latitude": {{ stop.lat }},
+                        "longitude": {{ stop.lon }}
+                    }
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "בית",
+                "item": "https://dorpascal.com/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "קווים",
+                "item": "https://dorpascal.com/MooveFree/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "קו {{ route_short_name }}"
+            }
+        ]
+    }
+    </script>
+    <!-- Google Tag Manager -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-T7HFKFX0PR"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-T7HFKFX0PR');
+    </script>
+    <!-- End Google Tag Manager -->
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="transit-nav">
+    <nav class="transit-nav" aria-label="ניווט ראשי">
         <div class="transit-container">
             <div class="transit-nav-content">
-                <a href="index.html" class="transit-nav-back">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                <a href="/" class="transit-nav-back" aria-label="חזרה לכל הקווים">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-back" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19l-7-7 7-7" />
                     </svg>
-                    <span>All Routes</span>
+                    <span>כל הקווים</span>
                 </a>
-                <span class="transit-nav-brand">Transit Explorer</span>
+                <span class="transit-nav-brand">MooveFree - תחבורה ציבורית בישראל</span>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="transit-container">
+    <main class="transit-container" role="main">
         <!-- Route Header -->
         <div class="transit-card route-header">
-            <div class="route-title">
-                Route {{ route_short_name }}
-                <span class="route-type-badge">
-                    {% if route_type == '3' %}Bus
-                    {% elif route_type == '2' %}Train
-                    {% elif route_type == '0' %}Tram
-                    {% else %}Other{% endif %}
+            <h1 class="route-title">
+                קו {{ route_short_name }}
+                <span class="route-type-badge" aria-label="סוג תחבורה">
+                    {% if route_type == '3' %}אוטובוס
+                    {% elif route_type == '2' %}רכבת
+                    {% elif route_type == '0' %}רכבת קלה
+                    {% else %}אחר{% endif %}
                 </span>
-            </div>
+            </h1>
             <div class="route-subtitle">{{ route_long_name }}</div>
         </div>
 
         <!-- Map and Stops Grid -->
         <div class="transit-layout-main">
             <!-- Map -->
-            <div class="transit-card">
-                <div class="route-title">Route Map</div>
-                <div id="map" class="transit-map"></div>
-            </div>
+            <section class="transit-card" aria-label="מפת מסלול">
+                <h2 class="route-title">מפת מסלול</h2>
+                <div id="map" class="transit-map" aria-label="מפת מסלול אינטראקטיבית"></div>
+            </section>
 
             <!-- Stops List -->
-            <div class="transit-card">
-                <div class="route-title">Stops</div>
+            <section class="transit-card" aria-label="רשימת תחנות">
+                <h2 class="route-title">תחנות</h2>
                 <div class="stops-container">
                     {% for stop in stops %}
-                    <div class="stop-item" onclick="highlightStop({{ stop.lat }}, {{ stop.lon }}, '{{ stop.name }}')">
+                    <button class="stop-item"
+                            onclick="highlightStop({{ stop.lat }}, {{ stop.lon }}, '{{ stop.name }}')"
+                            aria-label="תחנה {{ stop.sequence }}: {{ stop.name }}">
                         <span class="stop-number">{{ stop.sequence }}</span>
                         <div class="stop-details">
                             <div class="stop-name">{{ stop.name }}</div>
                             <div class="stop-coordinates">{{ stop.lat }}, {{ stop.lon }}</div>
                         </div>
-                    </div>
+                    </button>
                     {% endfor %}
                 </div>
-            </div>
+            </section>
         </div>
     </main>
 
+    <!-- Footer -->
+    <footer class="transit-footer">
+        <div class="transit-container">
+            <p>© {{ current_year }} MooveFree by <a href="https://dorpascal.com" target="_blank" rel="noopener">Dor Pascal</a></p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
         // Initialize map
-        const map = L.map('map');
+        const map = L.map('map', {
+            scrollWheelZoom: false // Disable scroll zoom for better mobile experience
+        });
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
         // Add stops to map
@@ -130,7 +242,10 @@ def generate_stylish_route_pages(gtfs_path):
 
         stops.forEach(stop => {
             const marker = L.marker([stop.lat, stop.lon])
-                .bindPopup(`<b>${stop.sequence}. ${stop.name}</b>`)
+                .bindPopup(`<strong>${stop.sequence}. ${stop.name}</strong>`, {
+                    direction: 'rtl',
+                    className: 'rtl-popup'
+                })
                 .addTo(map);
             markers.push(marker);
         });
@@ -203,7 +318,9 @@ def generate_stylish_route_pages(gtfs_path):
                         route_type=route['route_type'],
                         agency_id=route.get('agency_id', 'N/A'),
                         stops=stops_info,
-                        stops_json=json.dumps(stops_info)
+                        stops_json=json.dumps(stops_info),
+                        current_url=f"https://dorpascal.com/MooveFree/route_pages/route_{route_short_name}",
+                        current_year=datetime.now().year
                     )
 
                     # Save HTML file
