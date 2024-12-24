@@ -24,123 +24,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         print(f"Error calculating distance: {e}")
         return 0
 
-def create_styles_css(output_dir):
-    """Create the styles.css file in the output directory."""
-    css_content = """/* Base styles */
-:root {
-    --primary-color: #3B82F6;
-    --primary-dark: #2563EB;
-    --secondary-color: #764BA2;
-    --gradient-start: #667EEA;
-    --gradient-end: #764BA2;
-    --text-primary: #1F2937;
-    --text-secondary: #4B5563;
-    --background-light: #F9FAFB;
-    --card-hover-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Navigation styles */
-.nav-container {
-    background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.nav-link {
-    transition: opacity 0.2s ease;
-}
-
-.nav-link:hover {
-    opacity: 0.8;
-}
-
-/* Map container styles */
-.map-container {
-    height: 500px;
-    width: 100%;
-    border-radius: 0.75rem;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border: 2px solid #E5E7EB;
-}
-
-/* Stop card styles */
-.stop-card {
-    transition: all 0.3s ease;
-    border: 1px solid #E5E7EB;
-    position: relative;
-    overflow: hidden;
-}
-
-.stop-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--card-hover-shadow);
-    border-color: var(--primary-color);
-}
-
-.stop-number {
-    background-color: var(--primary-color);
-    color: white;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-}
-
-/* Route header styles */
-.route-header {
-    background: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid #E5E7EB;
-}
-
-.route-badge {
-    background-color: #DBEAFE;
-    color: var(--primary-color);
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .map-container {
-        height: 400px;
-    }
-
-    .stop-card {
-        margin-bottom: 0.5rem;
-    }
-}
-
-/* Custom scrollbar for stops list */
-.stops-container {
-    max-height: 600px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-color) #E5E7EB;
-}
-
-.stops-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.stops-container::-webkit-scrollbar-track {
-    background: #E5E7EB;
-    border-radius: 3px;
-}
-
-.stops-container::-webkit-scrollbar-thumb {
-    background-color: var(--primary-color);
-    border-radius: 3px;
-}"""
-
-    with open(os.path.join(output_dir, 'styles.css'), 'w', encoding='utf-8') as f:
-        f.write(css_content)
 
 def generate_stylish_route_pages(gtfs_path):
     """Generate stylish HTML pages with maps for each route in the GTFS data."""
@@ -151,8 +34,7 @@ def generate_stylish_route_pages(gtfs_path):
             shutil.rmtree(output_dir)
         os.makedirs(output_dir)
 
-        # Create styles.css
-        create_styles_css(output_dir)
+
 
         # Load GTFS files with error handling
         try:
@@ -167,141 +49,126 @@ def generate_stylish_route_pages(gtfs_path):
         # HTML template for route pages
         route_template = Template("""
         <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Route {{ route_short_name }} - {{ route_long_name }}</title>
-            <link href="https://cdn.tailwindcss.com" rel="stylesheet">
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-            <link rel="stylesheet" href="styles.css">
-            <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-        </head>
-        <body class="bg-gray-50 min-h-screen">
-            <!-- Navigation -->
-            <nav class="nav-container text-white">
-                <div class="container mx-auto px-4 py-3">
-                    <div class="flex items-center justify-between">
-                        <a href="index.html" class="nav-link flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                            <span>All Routes</span>
-                        </a>
-                        <span class="text-xl font-bold">Transit Explorer</span>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route {{ route_short_name }} - {{ route_long_name }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="transit-nav">
+        <div class="transit-container">
+            <div class="transit-nav-content">
+                <a href="index.html" class="transit-nav-back">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>All Routes</span>
+                </a>
+                <span class="transit-nav-brand">Transit Explorer</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="transit-container">
+        <!-- Route Header -->
+        <div class="transit-card route-header">
+            <div class="route-title">
+                Route {{ route_short_name }}
+                <span class="route-type-badge">
+                    {% if route_type == '3' %}Bus
+                    {% elif route_type == '2' %}Train
+                    {% elif route_type == '0' %}Tram
+                    {% else %}Other{% endif %}
+                </span>
+            </div>
+            <div class="route-subtitle">{{ route_long_name }}</div>
+        </div>
+
+        <!-- Map and Stops Grid -->
+        <div class="transit-layout-main">
+            <!-- Map -->
+            <div class="transit-card">
+                <div class="route-title">Route Map</div>
+                <div id="map" class="transit-map"></div>
+            </div>
+
+            <!-- Stops List -->
+            <div class="transit-card">
+                <div class="route-title">Stops</div>
+                <div class="stops-container">
+                    {% for stop in stops %}
+                    <div class="stop-item" onclick="highlightStop({{ stop.lat }}, {{ stop.lon }}, '{{ stop.name }}')">
+                        <span class="stop-number">{{ stop.sequence }}</span>
+                        <div class="stop-details">
+                            <div class="stop-name">{{ stop.name }}</div>
+                            <div class="stop-coordinates">{{ stop.lat }}, {{ stop.lon }}</div>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-            </nav>
+            </div>
+        </div>
+    </main>
 
-            <!-- Main Content -->
-            <main class="container mx-auto px-4 py-8">
-                <!-- Route Header -->
-                <div class="route-header p-6 mb-8">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="flex items-center space-x-3">
-                                <h1 class="text-4xl font-bold text-gray-800">Route {{ route_short_name }}</h1>
-                                <span class="route-badge">
-                                    {% if route_type == '3' %}Bus
-                                    {% elif route_type == '2' %}Train
-                                    {% elif route_type == '0' %}Tram
-                                    {% else %}Other{% endif %}
-                                </span>
-                            </div>
-                            <p class="text-lg text-gray-600 mt-2">{{ route_long_name }}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">{{ stops|length }} Stops</span>
-                        </div>
-                    </div>
-                </div>
+    <script>
+        // Initialize map
+        const map = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-                <!-- Map and Stops Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Map -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white rounded-lg shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Route Map</h2>
-                            <div id="map" class="map-container"></div>
-                        </div>
-                    </div>
+        // Add stops to map
+        const stops = {{ stops_json|safe }};
+        const markers = [];
+        const coordinates = stops.map(stop => [stop.lat, stop.lon]);
 
-                    <!-- Stops List -->
-                    <div class="lg:col-span-1">
-                        <div class="bg-white rounded-lg shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Stops</h2>
-                            <div class="stops-container space-y-3">
-                                {% for stop in stops %}
-                                <div class="stop-card bg-gray-50 rounded-lg p-4 cursor-pointer"
-                                     onclick="highlightStop({{ stop.lat }}, {{ stop.lon }}, '{{ stop.name|replace("'", "\\'") }}')">
-                                    <div class="flex items-center">
-                                        <span class="stop-number mr-4 flex-shrink-0">
-                                            {{ stop.sequence }}
-                                        </span>
-                                        <div>
-                                            <p class="font-medium text-gray-800">{{ stop.name }}</p>
-                                            <p class="text-sm text-gray-500">{{ stop.lat }}, {{ stop.lon }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
+        stops.forEach(stop => {
+            const marker = L.marker([stop.lat, stop.lon])
+                .bindPopup(`<b>${stop.sequence}. ${stop.name}</b>`)
+                .addTo(map);
+            markers.push(marker);
+        });
 
-            <script>
-                // Initialize map
-                const map = L.map('map');
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
+        // Draw route line
+        const routeLine = L.polyline(coordinates, {
+            color: 'var(--color-primary)',
+            weight: 3,
+            opacity: 0.8,
+            lineJoin: 'round'
+        }).addTo(map);
 
-                // Add stops to map
-                const stops = {{ stops_json|safe }};
-                const markers = [];
-                const coordinates = stops.map(stop => [stop.lat, stop.lon]);
+        // Fit map to route bounds
+        map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
 
-                stops.forEach(stop => {
-                    const marker = L.marker([stop.lat, stop.lon])
-                        .bindPopup(`<b>${stop.sequence}. ${stop.name}</b>`)
-                        .addTo(map);
-                    markers.push(marker);
-                });
-
-                // Draw route line
-                const routeLine = L.polyline(coordinates, {
-                    color: '#3B82F6',
-                    weight: 3,
-                    opacity: 0.8,
-                    lineJoin: 'round'
-                }).addTo(map);
-
-                // Fit map to route bounds
-                map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
-
-                // Function to highlight stop on map
-                function highlightStop(lat, lon, name) {
-                    map.setView([lat, lon], 16, {
-                        animate: true,
-                        duration: 1
-                    });
-                    markers.forEach(marker => {
-                        if (marker.getLatLng().lat === lat && marker.getLatLng().lng === lon) {
-                            marker.openPopup();
-                        }
-                    });
+        // Function to highlight stop on map
+        function highlightStop(lat, lon, name) {
+            map.setView([lat, lon], 16, {
+                animate: true,
+                duration: 1
+            });
+            markers.forEach(marker => {
+                if (marker.getLatLng().lat === lat && marker.getLatLng().lng === lon) {
+                    marker.openPopup();
                 }
-            </script>
-        </body>
-        </html>
+            });
+        }
+    </script>
+</body>
+</html>
         """)
 
         # Generate individual route pages
         for _, route in routes_df.iterrows():
             try:
-                route_short_name = str(route['route_short_name'])
+                # Clean route names as well
+                route_short_name = str(route['route_short_name']).replace("'", "")
+                route_long_name = str(route['route_long_name']).replace("'", "")
                 print(f"Generating page for route {route_short_name}...")
 
                 # Get trips for this route
@@ -317,9 +184,11 @@ def generate_stylish_route_pages(gtfs_path):
                     for _, stop_time in trip_stops.iterrows():
                         try:
                             stop = stops_df[stops_df['stop_id'] == stop_time['stop_id']].iloc[0]
+                            # Clean the stop name by removing any single quotes
+                            clean_name = str(stop['stop_name']).replace("'", "")
                             stops_info.append({
                                 'sequence': int(stop_time['stop_sequence']),
-                                'name': stop['stop_name'],
+                                'name': clean_name,
                                 'lat': float(stop['stop_lat']),
                                 'lon': float(stop['stop_lon'])
                             })
@@ -330,7 +199,7 @@ def generate_stylish_route_pages(gtfs_path):
                     # Generate HTML
                     html_content = route_template.render(
                         route_short_name=route_short_name,
-                        route_long_name=route['route_long_name'],
+                        route_long_name=route_long_name,
                         route_type=route['route_type'],
                         agency_id=route.get('agency_id', 'N/A'),
                         stops=stops_info,
