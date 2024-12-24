@@ -83,4 +83,4 @@ def plot_line_with_correct_edges(line_short_name, gtfs_path):
 
 # Example Usage
 gtfs_path = "israel-public-transportation"
-plot_line_with_correct_edges("480", gtfs_path)
+plot_line_with_correct_edges("48", gtfs_path)

@@ -2,3 +2,4 @@
 .DS_Store
 .venv/*
 bus_lines_stops.txt
+/route_pages/*
