@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Israel Transit Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: system-ui; }
+        .container { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+        .sidebar { background: #fff; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); overflow-y: auto; }
+        #map { width: 100%; height: 100%; }
+        .route-info { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; }
+        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px 0; }
+        .stat-card { background: #fff; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #2563eb; }
+        .filter-section { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Israel Transit Explorer</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRoutes">0</div>
+                    <div>Routes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalStops">0</div>
+                    <div>Stops</div>
+                </div>
+            </div>
+            <div class="filter-section">
+                <h3>Current Routes</h3>
+                <div id="routeList"></div>
+            </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script type="module">
+        let routeLayers = new Map();
+
+        const map = L.map('map').setView([31.956392, 34.898098], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const routeColors = {
+            "1": "#FF4136",
+            "2": "#0074D9",
+            "2א": "#B10DC9",
+            "3": "#2ECC40",
+            "4": "#FF851B"
+        };
+
+        let stopTimes = [];
+        async function loadData() {
+            const data = { routes: [], stops: [], trips: [] };
+
+            try {
+                const [routesResponse, stopsResponse, tripsResponse] = await Promise.all([
+                    fetch('israel-public-transportation/routes.txt'),
+                    fetch('israel-public-transportation/stops.txt'),
+                    fetch('israel-public-transportation/trips.txt')
+                ]);
+
+                data.routes = d3.csvParse(await routesResponse.text());
+                data.stops = d3.csvParse(await stopsResponse.text());
+                data.trips = d3.csvParse(await tripsResponse.text());
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+
+            return data;
+        }
+
+        function initializeVisualization(data) {
+            const { routes, stops, trips } = data;
+
+            document.getElementById('totalRoutes').textContent = routes.length;
+            document.getElementById('totalStops').textContent = stops.length;
+
+            // Add stops to map
+            stops.forEach(stop => {
+                const marker = L.circleMarker([stop.stop_lat, stop.stop_lon], {
+                    radius: 6,
+                    fillColor: "#333",
+                    color: "#fff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <strong>${stop.stop_name}</strong><br>
+                    ${stop.stop_desc}<br>
+                    Stop ID: ${stop.stop_id}
+                `);
+            });
+
+            // Create route list
+            const routeList = document.getElementById('routeList');
+            const uniqueRoutes = [...new Set(routes.map(r => r.route_short_name))];
+
+            uniqueRoutes.forEach(routeNum => {
+                const routeInfo = routes.find(r => r.route_short_name === routeNum);
+                const div = document.createElement('div');
+                div.className = 'route-info';
+                div.style.borderLeft = `4px solid ${routeColors[routeNum] || "#333"}`;
+                div.innerHTML = `
+                    <h4>Route ${routeNum}</h4>
+                    <p>${routeInfo.route_long_name.split('<->')[0]}</p>
+                `;
+                div.onclick = () => highlightRoute(routeNum, routes, stops, trips);
+                routeList.appendChild(div);
+            });
+        }
+        function highlightRoute(routeNum, routes, stops, trips) {
+            // Remove existing route layers
+            routeLayers.forEach(layer => map.removeLayer(layer));
+            routeLayers.clear();
+
+            const route = routes.find(r => r.route_short_name === routeNum);
+            const tripsForRoute = trips.filter(t => t.route_id === route.route_id);
+
+            console.log(tripsForRoute);
+
+            tripsForRoute.forEach(trip => {
+                const stopsForTrip = stopTimes.filter(st => st.trip_id === trip.trip_id);
+                const stopIds = stopsForTrip.map(st => st.stop_id);
+                const stopsForRoute = stops.filter(s => stopIds.includes(s.stop_id));
+
+                const latLngs = stopsForRoute.map(s => [s.stop_lat, s.stop_lon]);
+                const line = L.polyline(latLngs, { color: routeColors[routeNum] || "#333" }).addTo(map);
+                routeLayers.set(trip.trip_id, line);
+            });
+        }
+
+        const data = await loadData();
+        initializeVisualization(data);
+    </script>
+</body>
+</html>

@@ -232,19 +232,20 @@
             showLoading(true);
             try {
                 // Load stops
-                const stopsResponse = await fetch('stops.txt');
+                const stopsResponse = await fetch('israel-public-transportation/stops.txt');
                 const stopsText = await stopsResponse.text();
                 stops = parseCSV(stopsText);
 
                 // Load routes
-                const routesResponse = await fetch('routes.txt');
+                const routesResponse = await fetch('israel-public-transportation/routes.txt');
                 const routesText = await routesResponse.text();
                 routes = parseCSV(routesText);
 
                 // Load shapes
-                const shapesResponse = await fetch('shapes.txt');
+                const shapesResponse = await fetch('israel-public-transportation/shapes.txt');
                 const shapesText = await shapesResponse.text();
                 shapes = parseCSV(shapesText);
+
 
                 // Process shapes into route patterns
                 processShapes();
@@ -332,42 +333,79 @@
                 routePatterns.set(currentShapeId, currentPoints);
             }
         }
+        // Build graph of connected stops based on routes
+async function buildRouteGraph() {
+    stops.forEach(stop => stopGraph.set(stop.stop_id, new Set()));
 
-        // Build graph of connected stops
-        function buildRouteGraph() {
-            stops.forEach(stop => {
-                stopGraph.set(stop.stop_id, new Set());
-            });
+    try {
+        const response = await fetch('israel-public-transportation/stop_times.txt');
+        const reader = response.body.getReader();
+        let buffer = '';
 
-            routes.forEach(route => {
-                const routeStops = getRouteStops(route.route_id);
-                for (let i = 0; i < routeStops.length - 1; i++) {
-                    const currentStop = routeStops[i];
-                    const nextStop = routeStops[i + 1];
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
 
-                    if (currentStop && nextStop) {
-                        stopGraph.get(currentStop).add(nextStop);
-                    }
-                }
-            });
+            buffer += new TextDecoder().decode(value);
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
 
-            console.log("Stop Graph:", Array.from(stopGraph.entries()));
+            processLines(lines);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+function processTripStops(tripStops) {
+    tripStops.sort((a, b) => a.sequence - b.sequence);
+
+    for (let i = 0; i < tripStops.length - 1; i++) {
+        const currentStop = tripStops[i].stop_id;
+        const nextStop = tripStops[i + 1].stop_id;
+
+        if (stopGraph.has(currentStop) && stopGraph.has(nextStop)) {
+            stopGraph.get(currentStop).add(nextStop);
+            stopGraph.get(nextStop).add(currentStop);
+        }
+    }
+}
+function processLines(lines) {
+    let currentTripId = null;
+    let currentTripStops = [];
+
+    lines.forEach(line => {
+        if (!line.trim() || line.startsWith('trip_id')) return;
+
+        const [trip_id, , , stop_id, stop_sequence] = line.split(',');
+
+        if (trip_id !== currentTripId) {
+            if (currentTripStops.length > 1) {
+                processTripStops(currentTripStops);
+            }
+            currentTripId = trip_id;
+            currentTripStops = [];
         }
 
-        // Get stops for a route using shape data
-        function getRouteStops(routeId) {
-            const route = routes.find(r => r.route_id === routeId);
-            if (!route || !route.shape_id) return [];
+        currentTripStops.push({
+            stop_id,
+            sequence: parseInt(stop_sequence)
+        });
+    });
+}
+// Get stops for a route
+function getRouteStops(routeId) {
+    const routeStops = [];
+    const route = routes.find(r => r.route_id === routeId);
+    if (!route) return [];
 
-            const shapePoints = routePatterns.get(route.shape_id);
-            if (!shapePoints) return [];
+    const stop1 = stops.find(s => s.stop_id === route.from_stop_id);
+    const stop2 = stops.find(s => s.stop_id === route.to_stop_id);
 
-            return stops.filter(stop => {
-                const stopPoint = [parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)];
-                return isPointNearLine(stopPoint, shapePoints);
-            }).map(stop => stop.stop_id);
-        }
+    if (stop1) routeStops.push(stop1.stop_id);
+    if (stop2) routeStops.push(stop2.stop_id);
 
+    return routeStops;
+}
         // Check if a point is near a line 0.1 is 1km
         function isPointNearLine(point, line, threshold = 0.1) {
             for (let i = 0; i < line.length - 1; i++) {
