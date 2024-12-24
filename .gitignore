@@ -1,2 +1,4 @@
 /israel-public-transportation/*
 .DS_Store
+.venv/*
+bus_lines_stops.txt
