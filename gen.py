@@ -310,7 +310,10 @@ def generate_stylish_route_pages(gtfs_path):
                         except Exception as e:
                             print(f"Error processing stop: {e}")
                             continue
-
+                    # if page already exists, skip
+                    if os.path.exists(f"{output_dir}/route_{route_short_name}.html"):
+                        print(f"Page for route {route_short_name} already exists. Skipping...")
+                        continue
                     # Generate HTML
                     html_content = route_template.render(
                         route_short_name=route_short_name,
