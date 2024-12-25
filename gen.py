@@ -159,7 +159,7 @@ def generate_stylish_route_pages(gtfs_path):
     <nav class="transit-nav" aria-label="ניווט ראשי">
         <div class="transit-container">
             <div class="transit-nav-content">
-                <a href="/" class="transit-nav-back" aria-label="חזרה לכל הקווים">
+                <a href="../" class="transit-nav-back" aria-label="חזרה לכל הקווים">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-back" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19l-7-7 7-7" />
                     </svg>
