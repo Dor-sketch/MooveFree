@@ -30,9 +30,7 @@ def generate_stylish_route_pages(gtfs_path):
     try:
         # Create output directory
         output_dir = "docs/route_pages"
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
+
 
 
 
@@ -284,6 +282,9 @@ def generate_stylish_route_pages(gtfs_path):
                 # Clean route names as well
                 route_short_name = str(route['route_short_name']).replace("'", "")
                 route_long_name = str(route['route_long_name']).replace("'", "")
+                if os.path.exists(f"{output_dir}/route_{route_short_name}.html"):
+                    print(f"Page for route {route_short_name} already exists. Skipping...")
+                    continue
                 print(f"Generating page for route {route_short_name}...")
 
                 # Get trips for this route
@@ -293,6 +294,7 @@ def generate_stylish_route_pages(gtfs_path):
                     # Get first trip's stops
                     first_trip = route_trips.iloc[0]
                     trip_stops = stop_times_df[stop_times_df['trip_id'] == first_trip['trip_id']].sort_values('stop_sequence')
+                    # if page already exists, skip
 
                     # Get stop details
                     stops_info = []
@@ -310,10 +312,6 @@ def generate_stylish_route_pages(gtfs_path):
                         except Exception as e:
                             print(f"Error processing stop: {e}")
                             continue
-                    # if page already exists, skip
-                    if os.path.exists(f"{output_dir}/route_{route_short_name}.html"):
-                        print(f"Page for route {route_short_name} already exists. Skipping...")
-                        continue
                     # Generate HTML
                     html_content = route_template.render(
                         route_short_name=route_short_name,
