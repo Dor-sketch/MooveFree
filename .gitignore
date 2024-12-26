@@ -3,3 +3,5 @@
 .venv/*
 bus_lines_stops.txt
 /route_pages/*
+/cache/*
+visualize-net.py
